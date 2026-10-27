@@ -12,7 +12,7 @@ window.ND_TEST_CONFIG = {
   defaultPromptVersion: "v2",
 
   // Relay endpoint (Cloudflare Worker). Not a secret. The submit key comes from the link (#k=...).
-  relayUrl: "https://nd-voice-relay.REPLACE.workers.dev/submit",
+  relayUrl: "https://nd-voice-relay.ken-f63.workers.dev/submit",
 
   // Office hours in America/New_York. Days: 1 = Monday ... 5 = Friday.
   hours: {
