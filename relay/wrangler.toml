@@ -1,0 +1,10 @@
+name = "nd-voice-relay"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Not secrets. SUBMIT_KEY and GITHUB_TOKEN are set with `wrangler secret put`.
+[vars]
+ALLOWED_ORIGIN = "https://kenhroi.github.io"
+RESULTS_REPO = "KenHROI/nd-voice-results"
+RESULTS_BRANCH = "main"

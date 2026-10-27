@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>ND Voice Test Console</title>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --surface2: #eceef2; --text: #0f1419; --muted: #4a5360;
+  --line: #c9ced6; --accent: #0b57d0; --accent-text: #ffffff;
+  --good: #11752f; --good-bg: #dff3e4; --warn: #8a5300; --warn-bg: #fff1d6;
+  --bad: #b3261e; --bad-bg: #fde3e1; --chip-text: #ffffff;
+  --hh: 96px; --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #222a35; --text: #f2f4f8; --muted: #b4bcc8;
+    --line: #3a4452; --accent: #8ab4ff; --accent-text: #0d1117;
+    --good: #6fdc8c; --good-bg: #12301b; --warn: #ffc967; --warn-bg: #3a2a08;
+    --bad: #ff8a80; --bad-bg: #3d1411; --chip-text: #0d1117;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3 { line-height: 1.2; margin: 0 0 8px; }
+h2 { font-size: 1.35rem; } h3 { font-size: 1.1rem; }
+p { margin: 6px 0; }
+.wrap { max-width: 680px; margin: 0 auto; padding: 0 16px; }
+
+/* Header */
+header.top { position: sticky; top: 0; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--line); padding: 8px 0 6px; }
+.row1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.brand { font-weight: 800; font-size: 1rem; margin-right: auto; }
+.badge { font-weight: 800; font-size: .8rem; letter-spacing: .03em; padding: 4px 10px; border-radius: 999px; color: var(--chip-text); }
+.badge.OPEN { background: var(--good); } .badge.CLOSING_WINDOW { background: var(--warn); } .badge.CLOSED { background: var(--bad); }
+.clock { font-variant-numeric: tabular-nums; font-weight: 700; font-size: .95rem; }
+.who { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 4px 0 0; color: var(--muted); font-size: .9rem; min-height: 32px; }
+.setup { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 6px 0 4px; }
+.setup label { font-size: .8rem; color: var(--muted); }
+.setup input { width: 100%; }
+
+/* Generic */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin: 12px 0; }
+.banner { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); border-radius: var(--radius); padding: 10px 12px; margin: 12px 0; font-size: .92rem; font-weight: 600; }
+.banner.bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+.muted { color: var(--muted); }
+.small { font-size: .88rem; }
+input[type=text], input[type=tel], input:not([type]), textarea, select { width: 100%; min-height: 48px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); }
+textarea { min-height: 90px; resize: vertical; }
+input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+label.f { display: block; font-weight: 700; margin: 10px 0 4px; font-size: .95rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 52px; padding: 10px 16px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface2); font-weight: 700; text-decoration: none; }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn.good { background: var(--good); color: var(--chip-text); border-color: var(--good); }
+.btn.bad { background: var(--bad); color: var(--chip-text); border-color: var(--bad); }
+.btn.block { display: flex; width: 100%; }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .45; cursor: default; }
+.stack > * + * { margin-top: 10px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Welcome */
+.steps { list-style: none; padding: 0; margin: 12px 0; counter-reset: s; }
+.steps li { counter-increment: s; display: flex; gap: 12px; align-items: center; padding: 12px 0; font-size: 1.15rem; font-weight: 700; }
+.steps li::before { content: counter(s); flex: 0 0 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-text); font-size: 1.2rem; }
+
+/* Progress + cards */
+.progress { height: 14px; background: var(--surface2); border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+.progress > div { height: 100%; background: var(--good); }
+.tcard { display: block; width: 100%; text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); padding: 14px; margin: 10px 0; }
+.tcard .t { font-weight: 800; font-size: 1.05rem; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.pill { font-size: .8rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface2); }
+.chip { font-size: .85rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; color: var(--chip-text); }
+.chip.Pass { background: var(--good); } .chip.Pass-with-issues { background: var(--warn); } .chip.Fail { background: var(--bad); }
+.warnline { margin-top: 8px; color: var(--warn); font-weight: 700; font-size: .9rem; }
+
+/* Test screen */
+.back { background: none; border: 0; color: var(--accent); font-weight: 700; padding: 12px 0 4px; min-height: 44px; }
+.opening { font-size: 1.35rem; font-weight: 800; line-height: 1.3; margin: 8px 0; }
+details > summary { cursor: pointer; font-weight: 800; font-size: 1.05rem; min-height: 40px; display: flex; align-items: center; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::after { content: "▾"; margin-left: auto; }
+details:not([open]) > summary::after { content: "▸"; }
+.beat { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 12px 2px; min-height: 52px; }
+.tick { flex: 0 0 30px; height: 30px; border: 2px solid var(--line); border-radius: 8px; display: grid; place-items: center; font-weight: 900; }
+.beat.done .tick { background: var(--good); border-color: var(--good); color: var(--chip-text); }
+.beat.done .bt { text-decoration: line-through; color: var(--muted); }
+.timer { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center; margin: 6px 0; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 48px; font-weight: 700; }
+.check input { width: 28px; height: 28px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.seg button { min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface2); font-weight: 800; padding: 4px; }
+.seg button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.seg button.y[aria-pressed=true] { background: var(--good); border-color: var(--good); color: var(--chip-text); }
+.seg button.n[aria-pressed=true] { background: var(--bad); border-color: var(--bad); color: var(--chip-text); }
+.seg button.p[aria-pressed=true] { background: var(--warn); border-color: var(--warn); color: var(--chip-text); }
+
+.flagbar { position: sticky; top: var(--hh); z-index: 20; background: var(--bg); border-bottom: 2px solid var(--line); margin: 0 -16px; padding: 8px 16px; }
+.flags { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.flags button { min-height: 46px; padding: 4px 6px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); font-weight: 700; font-size: .8rem; line-height: 1.15; }
+.flags button:active { transform: scale(.97); }
+.flags button.good { border-color: var(--good); color: var(--good); }
+.flags button.bad { border-color: var(--bad); color: var(--bad); }
+.flags button.warn { border-color: var(--warn); color: var(--warn); }
+.flagnote { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: .9rem; }
+.flagnote input { min-height: 44px; }
+
+.item { border-top: 1px solid var(--line); padding: 12px 0; }
+.item.redrow { background: var(--bad-bg); margin: 0 -14px; padding: 12px 14px; border-left: 6px solid var(--bad); }
+.item .txt { font-weight: 600; margin-bottom: 8px; }
+.crit { display: inline-block; font-size: .72rem; font-weight: 900; letter-spacing: .04em; color: var(--bad); border: 1px solid var(--bad); border-radius: 6px; padding: 0 6px; margin-right: 6px; vertical-align: 2px; }
+.notebtn { background: none; border: 0; color: var(--accent); font-weight: 700; padding: 8px 0 0; min-height: 40px; font-size: .9rem; }
+.moment { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding: 8px 0; }
+.moment .mt { font-variant-numeric: tabular-nums; font-weight: 800; }
+.moment input { grid-column: 1 / -1; min-height: 44px; }
+.x { background: none; border: 0; color: var(--bad); font-weight: 800; min-width: 44px; min-height: 44px; }
+
+/* Bottom bar + sheet */
+.bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); }
+.bottombar .wrap { display: flex; gap: 8px; align-items: center; }
+.bottombar .btn.primary { flex: 1; min-height: 58px; font-size: 1.1rem; }
+.bottombar .count { font-size: .78rem; color: var(--muted); text-align: center; line-height: 1.2; min-width: 64px; }
+.sheet-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: 100%; max-width: 680px; border-radius: 16px 16px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); max-height: 90vh; overflow-y: auto; }
+.okbox { background: var(--good-bg); color: var(--good); border: 2px solid var(--good); border-radius: var(--radius); padding: 14px; font-weight: 700; }
+.errbox { background: var(--bad-bg); color: var(--bad); border: 2px solid var(--bad); border-radius: var(--radius); padding: 14px; font-weight: 700; }
+.receipt { font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+table.sum { width: 100%; border-collapse: collapse; }
+table.sum td { border-top: 1px solid var(--line); padding: 8px 4px; vertical-align: top; }
+@media (max-width: 420px) { .setup { grid-template-columns: 1fr 1fr; } .setup .full { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><p style="padding:16px">This page needs JavaScript turned on.</p></noscript>
+<script src="tests.config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.ND_TEST_CONFIG;
+  var TZ = C.hours.timeZone;
+  var LS_STATE = "ndvtc.state.v1", LS_ARCH = "ndvtc.archive.v1", LS_KEY = "ndvtc.submitkey.v1";
+  var SCHEMA = "nd-voice-test-results/v1";
+  var STATUS = { NOT: "Not started", PROG: "In progress", DONE: "Done" };
+  var CHIPS = ["Pass", "Pass with issues", "Fail"];
+
+  // ---------- Storage ----------
+  var saveError = false;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); saveError = false; } catch (e) { saveError = true; } }
+  function readJSON(k, fallback) { try { var v = lsGet(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+
+  function blankTest() {
+    return { status: STATUS.NOT, resultChip: null, computedChip: null, chipOverride: "",
+      callStartET: "", callStartMs: null, timerStartMs: null, durationSeconds: null,
+      numberUsed: "", callIdOrContactName: "", hoursStatusAtStart: "", cutoffTest: false,
+      checklist: {}, beats: {}, moments: [],
+      outcome: { reachedOutcome: "", wouldTrust: "", naturalness: null, whatFeltOff: "" },
+      completedAtMs: null };
+  }
+  function blankState(prev) {
+    var s = { v: 1, welcomed: false, tester: "", round: "1", promptVersion: C.defaultPromptVersion, tests: {}, submissions: [] };
+    if (prev) { s.welcomed = true; s.tester = prev.tester; s.promptVersion = prev.promptVersion; s.round = nextRound(prev.round); }
+    C.tests.forEach(function (t) { s.tests[t.id] = blankTest(); });
+    return s;
+  }
+  function nextRound(r) { var n = parseInt(r, 10); return isNaN(n) ? String(r || "") + " next" : String(n + 1); }
+  function loadState() {
+    var s = readJSON(LS_STATE, null);
+    if (!s || !s.tests) s = blankState();
+    C.tests.forEach(function (t) {
+      if (!s.tests[t.id]) s.tests[t.id] = blankTest();
+      var b = blankTest(), x = s.tests[t.id];
+      Object.keys(b).forEach(function (k) { if (x[k] === undefined) x[k] = b[k]; });
+    });
+    if (!s.submissions) s.submissions = [];
+    return s;
+  }
+  var st = loadState();
+  var archive = readJSON(LS_ARCH, []);
+  function save() { lsSet(LS_STATE, JSON.stringify(st)); }
+  function saveArchive() { lsSet(LS_ARCH, JSON.stringify(archive)); }
+
+  // Submit key: from the link (#k=KEY), remembered on this device.
+  var memKey = "";
+  function readKey() {
+    var m = /(?:^|[#&])k=([^&]+)/.exec(location.hash || "");
+    if (m) { try { memKey = decodeURIComponent(m[1]); } catch (e) { memKey = m[1]; } lsSet(LS_KEY, memKey); }
+  }
+  readKey();
+  window.addEventListener("hashchange", function () { readKey(); render(true); });
+  function submitKey() { return memKey || lsGet(LS_KEY) || ""; }
+
+  // ---------- Eastern time ----------
+  var fParts = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", hour: "numeric", minute: "2-digit", hourCycle: "h23" });
+  var fLong = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+  var fClock = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", hour: "numeric", minute: "2-digit", hour12: true });
+  var DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  function etParts(d) {
+    var o = {};
+    fParts.formatToParts(d).forEach(function (p) { o[p.type] = p.value; });
+    return { dow: DOW[o.weekday], hour: parseInt(o.hour, 10) % 24, minute: parseInt(o.minute, 10) };
+  }
+  function hoursStatus(d) {
+    var p = etParts(d || new Date()), m = p.hour * 60 + p.minute, h = C.hours;
+    if (h.days.indexOf(p.dow) === -1) return "CLOSED";
+    if (m >= h.openMinute && m < h.closingWindowMinute) return "OPEN";
+    if (m >= h.closingWindowMinute && m < h.closeMinute) return "CLOSING_WINDOW";
+    return "CLOSED";
+  }
+  function fmtET(d) { return fLong.format(d).replace(/ /g, " ") + " ET"; }
+  function fmtClock(d) { return fClock.format(d).replace(/ /g, " ") + " ET"; }
+  var STATUS_LABEL = { OPEN: "OPEN", CLOSING_WINDOW: "CLOSING WINDOW", CLOSED: "CLOSED" };
+  function windowMismatch(t, status) {
+    if (t.window === "in_hours" && status !== "OPEN") return "Best run Monday to Friday, 9 AM to 4:55 PM Eastern. Right now it is " + STATUS_LABEL[status] + ". You can still run it.";
+    if (t.window === "out_of_hours" && status !== "CLOSED") return "Best run outside Monday to Friday 9 AM to 5 PM Eastern. Right now it is " + STATUS_LABEL[status] + ". You can still run it.";
+    return "";
+  }
+
+  // ---------- Helpers ----------
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function mmss(sec) { if (sec == null || isNaN(sec)) return "--:--"; sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
+  function testDef(id) { for (var i = 0; i < C.tests.length; i++) if (C.tests[i].id === id) return C.tests[i]; return null; }
+  function touch(tr) { if (tr.status === STATUS.NOT) tr.status = STATUS.PROG; }
+  function chipClass(c) { return String(c || "").replace(/ /g, "-"); }
+  function opening(t, s) { return t.opening.replace("{name}", (s.tester || "").trim() || "[your name]"); }
+  function computeChip(t, tr) {
+    var critNo = false, otherNo = false;
+    t.checklist.forEach(function (ci) { var v = (tr.checklist[ci.id] || {}).verdict; if (v === "no") { if (ci.critical) critNo = true; else otherNo = true; } });
+    var r = tr.outcome.reachedOutcome;
+    if (critNo || r === "No") return "Fail";
+    if (otherNo || r === "Partly") return "Pass with issues";
+    return "Pass";
+  }
+  function critFails(t, tr) { return t.checklist.filter(function (ci) { return ci.critical && (tr.checklist[ci.id] || {}).verdict === "no"; }).length; }
+  function doneCount(s) { return C.tests.filter(function (t) { return s.tests[t.id].status === STATUS.DONE; }).length; }
+  function momentLabel(id) { for (var i = 0; i < C.momentTypes.length; i++) if (C.momentTypes[i].id === id) return C.momentTypes[i].label; return id; }
+
+  // ---------- Payload + report ----------
+  function testPayload(t, tr) {
+    return {
+      id: t.id, number: t.number, title: t.title,
+      status: tr.status, resultChip: tr.resultChip,
+      callStartET: tr.callStartET, durationSeconds: tr.durationSeconds,
+      numberUsed: tr.numberUsed, callIdOrContactName: tr.callIdOrContactName,
+      hoursStatusAtStart: tr.hoursStatusAtStart || null, cutoffTest: !!tr.cutoffTest,
+      checklist: t.checklist.map(function (ci) { var a = tr.checklist[ci.id] || {}; return { id: ci.id, text: ci.text, critical: !!ci.critical, verdict: a.verdict || null, note: a.note || "" }; }),
+      moments: tr.moments.map(function (m) { return { secondsSinceStart: m.secondsSinceStart, type: m.type, label: momentLabel(m.type), note: m.note || "" }; }),
+      outcome: { reachedOutcome: tr.outcome.reachedOutcome || null, wouldTrust: tr.outcome.wouldTrust || null, naturalness: tr.outcome.naturalness, whatFeltOff: tr.outcome.whatFeltOff || "" }
+    };
+  }
+  function buildPayload(s, onlyId) {
+    return {
+      schema: SCHEMA, appVersion: C.appVersion,
+      tester: (s.tester || "").trim(), round: String(s.round || "").trim(), promptVersion: (s.promptVersion || "").trim(),
+      submittedAtET: fmtET(new Date()), submittedAtUtc: new Date().toISOString(),
+      submissionNumber: (s.submissions || []).length + 1,
+      scope: onlyId ? "single-test" : "full-round",
+      tests: C.tests.filter(function (t) { return !onlyId || t.id === onlyId; }).map(function (t) { return testPayload(t, s.tests[t.id]); })
+    };
+  }
+  function buildMarkdown(s, onlyId) {
+    var p = buildPayload(s, onlyId), L = [];
+    L.push("ND-VOICE-TEST-RESULTS v1");
+    L.push("Tester: " + (p.tester || "?") + " | Round: " + (p.round || "?") + " | Prompt: " + (p.promptVersion || "?"));
+    L.push("Sent: " + p.submittedAtET + (onlyId ? " (one test only)" : ""));
+    p.tests.forEach(function (x) {
+      var no = x.checklist.filter(function (c) { return c.verdict === "no"; });
+      var open = x.checklist.filter(function (c) { return !c.verdict; }).length;
+      L.push("");
+      L.push("## Test " + x.number + ": " + x.title + " | " + (x.resultChip || x.status));
+      L.push("Call start: " + (x.callStartET || "?") + " | Length: " + mmss(x.durationSeconds) + " | Hours: " + (x.hoursStatusAtStart || "?") + (x.cutoffTest ? " | CUTOFF TEST" : ""));
+      if (x.callIdOrContactName) L.push("Call ID / contact: " + x.callIdOrContactName);
+      L.push("Checklist: " + x.checklist.filter(function (c) { return c.verdict === "yes"; }).length + " yes, " + no.length + " no, " + x.checklist.filter(function (c) { return c.verdict === "na"; }).length + " n/a, " + open + " blank");
+      no.forEach(function (c) { L.push("- NO" + (c.critical ? " (CRITICAL)" : "") + ": " + c.text + (c.note ? " Note: " + c.note : "")); });
+      x.checklist.forEach(function (c) { if (c.verdict !== "no" && c.note) L.push("- Note on \"" + c.text + "\": " + c.note); });
+      x.moments.forEach(function (m) { L.push("- " + mmss(m.secondsSinceStart) + " " + m.label + (m.note ? ": " + m.note : "")); });
+      var o = x.outcome;
+      L.push("Outcome reached: " + (o.reachedOutcome || "?") + " | Trust with real lead: " + (o.wouldTrust || "?") + " | Naturalness: " + (o.naturalness || "?") + "/5");
+      if (o.whatFeltOff) L.push("What felt off: " + o.whatFeltOff);
+    });
+    L.push("");
+    L.push("```json");
+    L.push(JSON.stringify(p, null, 1));
+    L.push("```");
+    return L.join("\n");
+  }
+
+  // ---------- UI state ----------
+  var ui = { view: st.welcomed ? "home" : "welcome", testId: null, setupOpen: false, notesOpen: {}, scriptOpen: true, sheet: null, archIdx: null, lastMoment: null };
+
+  // ---------- Rendering ----------
+  var app = document.getElementById("app");
+  function render(keepScroll) {
+    var y = window.scrollY;
+    var html = header() + '<main class="wrap">';
+    if (ui.view === "welcome") html += viewWelcome();
+    else if (ui.view === "home") html += viewHome();
+    else if (ui.view === "test") html += viewTest();
+    else if (ui.view === "summary") html += viewSummary(st, null);
+    else if (ui.view === "past") html += viewPast();
+    else if (ui.view === "archived") html += viewSummary(archive[ui.archIdx].state, ui.archIdx);
+    html += "</main>" + bottomBar() + sheet();
+    app.innerHTML = html;
+    measureHeader();
+    if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
+  }
+  function header() {
+    var now = new Date(), hs = hoursStatus(now);
+    var h = '<header class="top"><div class="wrap"><div class="row1"><span class="brand">ND Voice Test</span>' +
+      '<span id="badge" class="badge ' + hs + '">' + STATUS_LABEL[hs] + '</span><span id="clock" class="clock">' + esc(fmtClock(now)) + "</span></div>";
+    if (ui.view !== "welcome") {
+      h += '<button class="who" data-action="toggle-setup" aria-expanded="' + ui.setupOpen + '">Tester: <b id="whoName">' + esc(st.tester || "tap to set") + "</b> · Round <b>" + esc(st.round) + "</b> · Prompt <b>" + esc(st.promptVersion) + "</b> ✎</button>";
+      if (ui.setupOpen) h += '<div class="setup"><div class="full"><label>Tester name</label><input data-field="meta.tester" value="' + esc(st.tester) + '" autocomplete="name"></div>' +
+        '<div><label>Round</label><input data-field="meta.round" value="' + esc(st.round) + '" inputmode="numeric"></div>' +
+        '<div><label>Prompt version</label><input data-field="meta.promptVersion" value="' + esc(st.promptVersion) + '"></div></div>';
+    }
+    return h + "</div></header>";
+  }
+  function banners() {
+    var h = '<div class="banner">Your answers are saved on this device. Do not clear your browser data until you have submitted.</div>';
+    if (saveError) h += '<div class="banner bad">This device would not save your answers. Keep this page open and tap Submit results when you finish.</div>';
+    if (!submitKey()) h += '<div class="banner bad">This link has no submit key, so Submit results will fall back to sharing. Ask ' + esc(C.ownerName) + " for the full link.</div>";
+    return h;
+  }
+  function viewWelcome() {
+    return '<div class="card" style="margin-top:20px"><h2>Welcome</h2><p>You will phone ' + esc(C.agentName) + ", the voice receptionist for " + esc(C.businessName) + ", five times and tick boxes as you go.</p>" +
+      '<ol class="steps"><li>Make a call to ' + esc(C.agentName) + '</li><li>Tick the boxes while you talk</li><li>Tap Submit results</li></ol>' +
+      '<label class="f" for="wName">Your name</label><input id="wName" data-field="meta.tester" value="' + esc(st.tester) + '" autocomplete="name">' +
+      '<div style="margin-top:14px"><button class="btn primary block" data-action="start">Get started</button></div></div>';
+  }
+  function viewHome() {
+    var now = new Date(), hs = hoursStatus(now), done = doneCount(st), n = C.tests.length;
+    var h = banners();
+    h += '<div class="card"><h3>How to test</h3><ul style="margin:6px 0;padding-left:20px">' + C.testerInstructions.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>";
+    h += '<div class="card"><div style="display:flex;justify-content:space-between;font-weight:800;margin-bottom:6px"><span>Progress</span><span>' + done + " of " + n + ' done</span></div><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + done + '"><div style="width:' + Math.round(done / n * 100) + '%"></div></div></div>';
+    C.tests.forEach(function (t) {
+      var tr = st.tests[t.id], warn = tr.status === STATUS.DONE ? "" : windowMismatch(t, hs);
+      h += '<button class="tcard" data-action="open-test" data-id="' + t.id + '"><div class="t">Test ' + t.number + ": " + esc(t.title) + '</div><div class="muted small">' + esc(t.persona) + "</div>" +
+        '<div class="pills"><span class="pill">' + esc(tr.status) + "</span>" + (tr.resultChip ? '<span class="chip ' + chipClass(tr.resultChip) + '">' + esc(tr.resultChip) + "</span>" : "") + "</div>" +
+        (warn ? '<div class="warnline" data-warn="' + t.id + '">⚠ ' + esc(warn) + "</div>" : "") + "</button>";
+    });
+    h += '<div class="stack" style="margin:16px 0"><button class="btn block" data-action="summary">See summary</button>' +
+      '<div class="two"><button class="btn" data-action="new-round">Start new round</button><button class="btn" data-action="past">Past rounds (' + archive.length + ")</button></div></div>";
+    return h;
+  }
+  function seg(field, value, options) {
+    return '<div class="seg">' + options.map(function (o) {
+      return '<button class="' + (o.cls || "") + '" data-action="set" data-field="' + field + '" data-value="' + esc(o.v) + '" aria-pressed="' + (String(value) === String(o.v)) + '">' + esc(o.l) + "</button>";
+    }).join("") + "</div>";
+  }
+  function viewTest() {
+    var t = testDef(ui.testId), tr = st.tests[t.id], hs = hoursStatus(new Date());
+    var warn = windowMismatch(t, hs), running = !!tr.timerStartMs;
+    var h = '<button class="back" data-action="home">← All tests</button>';
+    h += "<h2>Test " + t.number + ": " + esc(t.title) + '</h2><p><b>Persona:</b> ' + esc(t.persona) + "</p>";
+    h += '<div class="card"><h3>When to run</h3><p>' + esc(t.whenToRun) + "</p>" + (t.transferNote ? '<p class="muted">' + esc(t.transferNote) + "</p>" : "") + (warn ? '<div class="warnline" data-warn="' + t.id + '">⚠ ' + esc(warn) + "</div>" : "") + "</div>";
+
+    // Pre-call
+    var prevNum = "";
+    C.tests.forEach(function (o) { if (o.id !== t.id && st.tests[o.id].numberUsed && !prevNum) prevNum = st.tests[o.id].numberUsed; });
+    h += '<div class="card"><h3>Before and during the call</h3>' +
+      '<div class="timer" id="timer">' + mmss(running ? (Date.now() - tr.timerStartMs) / 1000 : tr.durationSeconds) + "</div>" +
+      '<div class="two"><button class="btn good" data-action="call-start"' + (running ? " disabled" : "") + ">" + (tr.durationSeconds != null && !running ? "Restart call" : "Start call") + '</button><button class="btn bad" data-action="call-end"' + (running ? "" : " disabled") + ">End call</button></div>" +
+      '<label class="f">Call start (Eastern)</label><input data-field="test.callStartET" value="' + esc(tr.callStartET) + '">' +
+      '<label class="f">Hours when the call started</label>' + seg("test.hoursStatusAtStart", tr.hoursStatusAtStart, [{ v: "OPEN", l: "Open" }, { v: "CLOSING_WINDOW", l: "Closing" }, { v: "CLOSED", l: "Closed" }]) +
+      '<label class="check"><input type="checkbox" data-field="test.cutoffTest"' + (tr.cutoffTest ? " checked" : "") + "> This was a cutoff test (4:55 to 5:00 PM)</label>" +
+      '<label class="f">Number used</label><input type="tel" data-field="test.numberUsed" value="' + esc(tr.numberUsed) + '" autocomplete="tel" placeholder="The number you called from">' +
+      (prevNum && !tr.numberUsed ? '<button class="notebtn" data-action="same-number">Use same as before (' + esc(prevNum) + ")</button>" : "") +
+      '<label class="f">Call ID or contact name</label><input data-field="test.callIdOrContactName" value="' + esc(tr.callIdOrContactName) + '" placeholder="Optional">' +
+      "</div>";
+
+    // Script
+    h += '<details class="card" id="script"' + (ui.scriptOpen ? " open" : "") + '><summary data-action="toggle-script">Script</summary>' +
+      '<div class="muted small">Opening line</div><div class="opening">“' + esc(opening(t, st)) + "”</div>" + (t.openingNote ? '<p class="muted">' + esc(t.openingNote) + "</p>" : "") +
+      '<div class="muted small" style="margin-top:8px">Do (tap when done)</div>' +
+      t.beats.map(function (b, i) { var d = !!tr.beats[i]; return '<button class="beat' + (d ? " done" : "") + '" data-action="beat" data-i="' + i + '" aria-pressed="' + d + '"><span class="tick">' + (d ? "✓" : "") + '</span><span class="bt">' + esc(b) + "</span></button>"; }).join("") + "</details>";
+
+    // Sticky flag bar
+    h += '<div class="flagbar"><div class="flags">' + C.momentTypes.map(function (m) { return '<button class="' + m.tone + '" data-action="flag" data-type="' + m.id + '">' + esc(m.label) + "</button>"; }).join("") + "</div>";
+    if (ui.lastMoment != null && tr.moments[ui.lastMoment]) {
+      var lm = tr.moments[ui.lastMoment];
+      h += '<div class="flagnote"><span>✓ ' + esc(momentLabel(lm.type)) + " at " + mmss(lm.secondsSinceStart) + '</span><input data-field="moment.note.' + ui.lastMoment + '" value="' + esc(lm.note) + '" placeholder="Note (optional)"></div>';
+    }
+    h += "</div>";
+
+    if (tr.moments.length) {
+      h += '<div class="card"><h3>Flagged moments (' + tr.moments.length + ")</h3>" + tr.moments.map(function (m, i) {
+        return '<div class="moment"><span class="mt">' + mmss(m.secondsSinceStart) + "</span><span>" + esc(momentLabel(m.type)) + '</span><button class="x" data-action="del-moment" data-i="' + i + '" aria-label="Remove">✕</button><input data-field="moment.note.' + i + '" value="' + esc(m.note) + '" placeholder="Note (optional)"></div>';
+      }).join("") + "</div>";
+    }
+
+    // Checklist
+    h += '<div class="card"><h3>Checklist</h3><p class="muted small">Critical items are marked. Tap Yes, No, or N/A.</p>' + t.checklist.map(function (ci) {
+      var a = tr.checklist[ci.id] || {}, red = ci.critical && a.verdict === "no", open = ui.notesOpen[ci.id] || !!a.note;
+      return '<div class="item' + (red ? " redrow" : "") + '"><div class="txt">' + (ci.critical ? '<span class="crit">CRITICAL</span>' : "") + esc(ci.text) + "</div>" +
+        seg("check." + ci.id, a.verdict || "", [{ v: "yes", l: "Yes", cls: "y" }, { v: "no", l: "No", cls: "n" }, { v: "na", l: "N/A" }]) +
+        (open ? '<input style="margin-top:8px" data-field="checknote.' + ci.id + '" value="' + esc(a.note) + '" placeholder="One-line note">' : '<button class="notebtn" data-action="open-note" data-id="' + ci.id + '">+ Add note</button>') + "</div>";
+    }).join("") + "</div>";
+
+    // Outcome
+    var o = tr.outcome;
+    h += '<div class="card"><h3>Outcome</h3><label class="f">Did the call reach its intended outcome?</label>' + seg("outcome.reachedOutcome", o.reachedOutcome, [{ v: "Yes", l: "Yes", cls: "y" }, { v: "Partly", l: "Partly", cls: "p" }, { v: "No", l: "No", cls: "n" }]) +
+      '<label class="f">Would you trust this with a real lead?</label>' + seg("outcome.wouldTrust", o.wouldTrust, [{ v: "Yes", l: "Yes", cls: "y" }, { v: "Maybe", l: "Maybe", cls: "p" }, { v: "No", l: "No", cls: "n" }]) +
+      '<label class="f">How natural did it sound? (1 = robotic, 5 = human)</label>' + seg("outcome.naturalness", o.naturalness == null ? "" : o.naturalness, [1, 2, 3, 4, 5].map(function (n) { return { v: n, l: String(n) }; })) +
+      '<label class="f">What felt off?</label><textarea data-field="outcome.whatFeltOff" placeholder="Optional">' + esc(o.whatFeltOff) + "</textarea></div>";
+
+    // Complete
+    var computed = computeChip(t, tr), cf = critFails(t, tr);
+    h += '<div class="card"><h3>Finish this test</h3>';
+    if (tr.status === STATUS.DONE) {
+      h += '<p>Result: <span class="chip ' + chipClass(tr.resultChip) + '">' + esc(tr.resultChip) + "</span></p>" +
+        '<label class="f">Change result (optional)</label><select data-field="test.chipOverride"><option value="">Automatic (' + esc(computed) + ")</option>" + CHIPS.map(function (c) { return "<option" + (tr.chipOverride === c ? " selected" : "") + ">" + c + "</option>"; }).join("") + "</select>" +
+        '<div class="two" style="margin-top:10px"><button class="btn" data-action="reopen">Reopen test</button><button class="btn primary" data-action="home">Next test</button></div>';
+    } else {
+      h += '<p class="muted">If you finished now the result would be <span class="chip ' + chipClass(computed) + '">' + esc(computed) + "</span>" + (cf ? " (" + cf + " critical No)" : "") + "</p>" +
+        '<button class="btn primary block" data-action="complete">Mark test complete</button>';
+    }
+    h += '<button class="btn block ghost" style="margin-top:10px" data-action="share-test">Share this test only</button></div>';
+    return h;
+  }
+  function viewSummary(s, archIdx) {
+    var isArch = archIdx != null, h = "";
+    h += '<button class="back" data-action="' + (isArch ? "past" : "home") + '">← ' + (isArch ? "Past rounds" : "All tests") + "</button>";
+    h += "<h2>" + (isArch ? "Archived: " + esc(archive[archIdx].name) : "Summary") + '</h2><p class="muted">Tester ' + esc(s.tester || "?") + " · Round " + esc(s.round) + " · Prompt " + esc(s.promptVersion) + " · " + doneCount(s) + " of " + C.tests.length + " done</p>";
+    var totalCrit = 0, groups = {};
+    var rows = C.tests.map(function (t) {
+      var tr = s.tests[t.id], cf = critFails(t, tr); totalCrit += cf;
+      tr.moments.forEach(function (m) { (groups[m.type] = groups[m.type] || []).push({ t: t, m: m }); });
+      return "<tr><td><b>Test " + t.number + "</b><br><span class=\"small muted\">" + esc(t.title) + "</span></td><td>" + (tr.resultChip ? '<span class="chip ' + chipClass(tr.resultChip) + '">' + esc(tr.resultChip) + "</span>" : '<span class="pill">' + esc(tr.status) + "</span>") + (cf ? '<div class="small" style="color:var(--bad);font-weight:800;margin-top:4px">' + cf + " critical No</div>" : "") + "</td></tr>";
+    }).join("");
+    h += '<div class="card"><table class="sum">' + rows + '</table><p style="font-weight:800;margin-top:10px;color:' + (totalCrit ? "var(--bad)" : "var(--good)") + '">Critical failures: ' + totalCrit + "</p></div>";
+    h += '<div class="card"><h3>Flagged moments</h3>';
+    var any = false;
+    C.momentTypes.forEach(function (mt) {
+      var g = groups[mt.id]; if (!g) return; any = true;
+      h += '<p style="margin-top:10px"><b>' + esc(mt.label) + " (" + g.length + ")</b></p><ul style=\"margin:4px 0;padding-left:20px\">" + g.map(function (x) { return "<li>Test " + x.t.number + " at " + mmss(x.m.secondsSinceStart) + (x.m.note ? ": " + esc(x.m.note) : "") + "</li>"; }).join("") + "</ul>";
+    });
+    if (!any) h += '<p class="muted">None flagged.</p>';
+    h += "</div>";
+    h += '<div class="stack" style="margin:16px 0"><button class="btn primary block" data-action="submit"' + (isArch ? ' data-arch="' + archIdx + '"' : "") + ">Submit results</button>" +
+      '<button class="btn block" data-action="share-all"' + (isArch ? ' data-arch="' + archIdx + '"' : "") + ">Share results</button>" +
+      '<p class="muted small" style="text-align:center">Submitted ' + (s.submissions || []).length + " time" + ((s.submissions || []).length === 1 ? "" : "s") + "</p></div>";
+    return h;
+  }
+  function viewPast() {
+    var h = '<button class="back" data-action="home">← All tests</button><h2>Past rounds</h2>';
+    if (!archive.length) return h + '<p class="muted">No archived rounds yet. "Start new round" saves the current round here.</p>';
+    archive.slice().reverse().forEach(function (a, ri) {
+      var i = archive.length - 1 - ri;
+      h += '<button class="tcard" data-action="view-arch" data-i="' + i + '"><div class="t">' + esc(a.name) + '</div><div class="muted small">Archived ' + esc(fmtET(new Date(a.archivedAtMs))) + " · " + doneCount(a.state) + " of " + C.tests.length + " done · submitted " + (a.state.submissions || []).length + " times</div></button>";
+    });
+    return h;
+  }
+  function bottomBar() {
+    if (ui.view === "welcome") return "";
+    var s = ui.view === "archived" ? archive[ui.archIdx].state : st, n = (s.submissions || []).length;
+    return '<div class="bottombar"><div class="wrap"><button class="btn primary" data-action="submit"' + (ui.view === "archived" ? ' data-arch="' + ui.archIdx + '"' : "") + ">Submit results</button>" +
+      '<div class="count">Submitted<br><b>' + n + "</b> time" + (n === 1 ? "" : "s") + "</div></div></div>";
+  }
+  function sheet() {
+    var s = ui.sheet; if (!s) return "";
+    var h = '<div class="sheet-bg" data-action="sheet-bg"><div class="sheet" role="dialog" aria-modal="true">';
+    if (s.phase === "sending") h += '<h3>Sending…</h3><p class="muted">Please keep this page open.</p>';
+    else if (s.phase === "ok") h += '<div class="okbox"><div>Results received.</div><div class="receipt">Receipt ' + esc(s.receiptId) + '</div><p style="margin-top:8px">Done. You can tell ' + esc(C.ownerName) + " you are finished.</p></div>" +
+      '<p class="muted small">This round has been submitted ' + s.count + " time" + (s.count === 1 ? "" : "s") + ". Each submission is saved separately.</p>";
+    else if (s.phase === "fail") h += '<div class="errbox">Could not submit. ' + esc(s.error) + '</div><p style="margin-top:12px">Your answers are still saved here. Send them another way:</p>' +
+      '<button class="btn primary block" data-action="' + (s.onlyId ? "share-test" : "share-all") + '"' + (s.arch != null ? ' data-arch="' + s.arch + '"' : "") + ">Share results</button>" +
+      '<button class="btn block" style="margin-top:8px" data-action="copy-report">Copy results</button>' +
+      '<button class="btn block ghost" style="margin-top:8px" data-action="submit"' + (s.arch != null ? ' data-arch="' + s.arch + '"' : "") + ">Try submitting again</button>";
+    else if (s.phase === "shared") h += '<div class="okbox">' + esc(s.msg) + "</div>";
+    if (s.manualText) h += '<p class="small" style="margin-top:12px">Select all of this text, copy it, and paste it into WhatsApp:</p><textarea id="manualText" readonly style="min-height:160px">' + esc(s.manualText) + "</textarea>";
+    if (s.phase !== "sending") h += '<button class="btn block" style="margin-top:12px" data-action="close-sheet">Close</button>';
+    return h + "</div></div>";
+  }
+  function measureHeader() {
+    var hd = document.querySelector("header.top");
+    if (hd) document.documentElement.style.setProperty("--hh", hd.offsetHeight + "px");
+  }
+
+  // ---------- Actions ----------
+  function curTest() { return st.tests[ui.testId]; }
+  function stateFor(el) { var a = el && el.getAttribute("data-arch"); return a != null && a !== "" ? archive[+a].state : st; }
+  function persistFor(s) { if (s === st) save(); else saveArchive(); }
+
+  function startCall() {
+    var tr = curTest(), now = new Date(), hs = hoursStatus(now);
+    touch(tr);
+    tr.timerStartMs = now.getTime(); tr.callStartMs = now.getTime(); tr.durationSeconds = null;
+    tr.callStartET = fmtET(now); tr.hoursStatusAtStart = hs;
+    if (hs === "CLOSING_WINDOW") tr.cutoffTest = true;
+    save(); render(true);
+  }
+  function endCall() {
+    var tr = curTest(); if (!tr.timerStartMs) return;
+    tr.durationSeconds = Math.round((Date.now() - tr.timerStartMs) / 1000); tr.timerStartMs = null;
+    save(); render(true);
+  }
+  function logFlag(type) {
+    var tr = curTest(); touch(tr);
+    var secs = tr.callStartMs ? Math.round((Date.now() - tr.callStartMs) / 1000) : null;
+    tr.moments.push({ secondsSinceStart: secs, type: type, note: "", atUtc: new Date().toISOString() });
+    ui.lastMoment = tr.moments.length - 1;
+    save(); render(true);
+  }
+  function complete() {
+    var t = testDef(ui.testId), tr = curTest();
+    if (tr.timerStartMs) { tr.durationSeconds = Math.round((Date.now() - tr.timerStartMs) / 1000); tr.timerStartMs = null; }
+    tr.computedChip = computeChip(t, tr); tr.resultChip = tr.chipOverride || tr.computedChip;
+    tr.status = STATUS.DONE; tr.completedAtMs = Date.now();
+    save(); render(true);
+  }
+  function newRound() {
+    if (!window.confirm("Start a new round? Round " + st.round + " will be saved under Past rounds and the form will be cleared.")) return;
+    archive.push({ name: "Round " + st.round + (st.tester ? " (" + st.tester + ")" : ""), archivedAtMs: Date.now(), state: JSON.parse(JSON.stringify(st)) });
+    saveArchive();
+    st = blankState(st); save();
+    ui.view = "home"; ui.lastMoment = null; ui.notesOpen = {};
+    render();
+  }
+
+  function errorText(status, body) {
+    if (status === 401 || status === 403) return (body && body.error) || "The submit key in your link is missing or wrong.";
+    if (status === 413) return "The results are too large to send.";
+    if (body && body.error) return body.error + " (code " + status + ")";
+    return "The results server had a problem (code " + status + ").";
+  }
+  function submit(s, archIdx) {
+    ui.sheet = { phase: "sending" }; render(true);
+    var payload = buildPayload(s, null), key = submitKey();
+    function fail(msg) { ui.sheet = { phase: "fail", error: msg, arch: archIdx }; render(true); }
+    if (!key) return fail("This link has no submit key.");
+    if (!/^https:\/\//.test(C.relayUrl) || /REPLACE/.test(C.relayUrl)) return fail("The results server is not set up yet.");
+    payload.key = key;
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 20000);
+    fetch(C.relayUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined, mode: "cors", credentials: "omit" })
+      .then(function (res) {
+        return res.text().then(function (txt) {
+          var body = null; try { body = JSON.parse(txt); } catch (e) {}
+          if (res.ok && body && body.ok && body.receiptId) {
+            s.submissions = s.submissions || [];
+            s.submissions.push({ atUtc: new Date().toISOString(), receiptId: body.receiptId });
+            persistFor(s);
+            ui.sheet = { phase: "ok", receiptId: body.receiptId, count: s.submissions.length };
+            render(true);
+          } else fail(errorText(res.status, body));
+        });
+      })
+      .catch(function (e) { fail(e && e.name === "AbortError" ? "The results server took too long to answer." : "Could not reach the results server. Check your internet connection."); })
+      .then(function () { clearTimeout(timer); });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); ok ? resolve() : reject(new Error("copy failed"));
+    });
+  }
+  var lastReport = "";
+  function shareReport(text, title) {
+    lastReport = text;
+    function copyFallback() {
+      copyText(text).then(function () { ui.sheet = { phase: "shared", msg: "Copied. Now paste into WhatsApp." }; render(true); })
+        .catch(function () { ui.sheet = { phase: "shared", msg: "Could not copy automatically.", manualText: text }; render(true); });
+    }
+    if (navigator.share) {
+      navigator.share({ title: title, text: text }).then(function () { ui.sheet = { phase: "shared", msg: "Shared. Thank you." }; render(true); })
+        .catch(function (e) { if (e && e.name === "AbortError") return; copyFallback(); });
+    } else copyFallback();
+  }
+
+  document.addEventListener("click", function (ev) {
+    var el = ev.target.closest("[data-action]"); if (!el) return;
+    var a = el.getAttribute("data-action");
+    if (a === "sheet-bg") { if (ev.target === el && ui.sheet && ui.sheet.phase !== "sending") { ui.sheet = null; render(true); } return; }
+    if (a === "toggle-script") { ev.preventDefault(); ui.scriptOpen = !ui.scriptOpen; render(true); return; }
+    var tr = ui.testId ? curTest() : null;
+    switch (a) {
+      case "start": st.welcomed = true; save(); ui.view = "home"; render(); break;
+      case "toggle-setup": ui.setupOpen = !ui.setupOpen; render(true); break;
+      case "home": ui.view = "home"; ui.testId = null; ui.lastMoment = null; render(); break;
+      case "summary": ui.view = "summary"; render(); break;
+      case "past": ui.view = "past"; render(); break;
+      case "view-arch": ui.archIdx = +el.getAttribute("data-i"); ui.view = "archived"; render(); break;
+      case "new-round": newRound(); break;
+      case "open-test":
+        ui.testId = el.getAttribute("data-id"); ui.view = "test"; ui.lastMoment = null;
+        tr = curTest();
+        if (!tr.callStartET) { var now = new Date(); tr.callStartET = fmtET(now); tr.hoursStatusAtStart = hoursStatus(now); if (tr.hoursStatusAtStart === "CLOSING_WINDOW") tr.cutoffTest = true; save(); }
+        render(); break;
+      case "call-start": startCall(); break;
+      case "call-end": endCall(); break;
+      case "flag": logFlag(el.getAttribute("data-type")); break;
+      case "del-moment": tr.moments.splice(+el.getAttribute("data-i"), 1); ui.lastMoment = null; save(); render(true); break;
+      case "beat": var i = el.getAttribute("data-i"); tr.beats[i] = !tr.beats[i]; touch(tr); save(); render(true); break;
+      case "open-note": ui.notesOpen[el.getAttribute("data-id")] = true; render(true); var inp = document.querySelector('[data-field="checknote.' + el.getAttribute("data-id") + '"]'); if (inp) inp.focus(); break;
+      case "same-number": C.tests.some(function (o) { var v = st.tests[o.id].numberUsed; if (o.id !== ui.testId && v) { tr.numberUsed = v; return true; } return false; }); touch(tr); save(); render(true); break;
+      case "set": setField(el.getAttribute("data-field"), el.getAttribute("data-value"), true); break;
+      case "complete": complete(); break;
+      case "reopen": tr.status = STATUS.PROG; tr.resultChip = null; save(); render(true); break;
+      case "submit": var s = stateFor(el); submit(s, s === st ? null : +el.getAttribute("data-arch")); break;
+      case "share-all": var s2 = stateFor(el); shareReport(buildMarkdown(s2, null), "ND voice test results"); break;
+      case "share-test": shareReport(buildMarkdown(st, ui.testId), "ND voice test " + (testDef(ui.testId) || {}).number); break;
+      case "copy-report":
+        var s3 = ui.sheet && ui.sheet.arch != null ? archive[ui.sheet.arch].state : st, txt = buildMarkdown(s3, null);
+        copyText(txt).then(function () { ui.sheet = { phase: "shared", msg: "Copied. Now paste into WhatsApp." }; render(true); })
+          .catch(function () { ui.sheet = { phase: "shared", msg: "Could not copy automatically.", manualText: txt }; render(true); });
+        break;
+      case "close-sheet": ui.sheet = null; render(true); break;
+    }
+  });
+
+  // Field writes. Buttons re-render; typing saves without re-rendering (keeps the keyboard up).
+  function setField(path, value, rerender) {
+    var parts = path.split("."), tr = ui.testId ? curTest() : null;
+    if (parts[0] === "meta") { st[parts[1]] = value; var w = document.getElementById("whoName"); if (w && parts[1] === "tester") w.textContent = value || "tap to set"; }
+    else if (parts[0] === "test") {
+      if (parts[1] === "cutoffTest") tr.cutoffTest = !!value;
+      else if (parts[1] === "chipOverride") { tr.chipOverride = value; var t = testDef(ui.testId); tr.computedChip = computeChip(t, tr); tr.resultChip = value || tr.computedChip; rerender = true; }
+      else tr[parts[1]] = tr[parts[1]] === value && parts[1] === "hoursStatusAtStart" ? "" : value;
+      if (parts[1] === "hoursStatusAtStart" && value === "CLOSING_WINDOW") tr.cutoffTest = true;
+      touch(tr);
+    }
+    else if (parts[0] === "check") {
+      var a = tr.checklist[parts[1]] = tr.checklist[parts[1]] || {};
+      a.verdict = a.verdict === value ? "" : value; touch(tr);
+      if (tr.status === STATUS.DONE) { tr.computedChip = computeChip(testDef(ui.testId), tr); tr.resultChip = tr.chipOverride || tr.computedChip; }
+    }
+    else if (parts[0] === "checknote") { (tr.checklist[parts[1]] = tr.checklist[parts[1]] || {}).note = value; touch(tr); }
+    else if (parts[0] === "outcome") {
+      if (parts[1] === "naturalness") value = tr.outcome.naturalness === +value ? null : +value;
+      else if (rerender && tr.outcome[parts[1]] === value) value = "";
+      tr.outcome[parts[1]] = value; touch(tr);
+      if (tr.status === STATUS.DONE) { tr.computedChip = computeChip(testDef(ui.testId), tr); tr.resultChip = tr.chipOverride || tr.computedChip; }
+    }
+    else if (parts[0] === "moment") { var m = tr.moments[+parts[2]]; if (m) m.note = value; }
+    save();
+    if (rerender) render(true);
+  }
+  document.addEventListener("input", function (ev) {
+    var f = ev.target.getAttribute && ev.target.getAttribute("data-field"); if (!f) return;
+    if (ev.target.type === "checkbox") return;
+    setField(f, ev.target.value, false);
+  });
+  document.addEventListener("change", function (ev) {
+    var f = ev.target.getAttribute && ev.target.getAttribute("data-field"); if (!f) return;
+    if (ev.target.type === "checkbox") setField(f, ev.target.checked, false);
+    else if (ev.target.tagName === "SELECT") setField(f, ev.target.value, true);
+    else if (f.indexOf("meta.") === 0 && ui.view === "home") render(true);
+  });
+
+  // ---------- Clocks ----------
+  function tickClock() {
+    var now = new Date(), hs = hoursStatus(now), b = document.getElementById("badge"), c = document.getElementById("clock");
+    if (b) { b.className = "badge " + hs; b.textContent = STATUS_LABEL[hs]; }
+    if (c) c.textContent = fmtClock(now);
+    document.querySelectorAll("[data-warn]").forEach(function (el) {
+      var w = windowMismatch(testDef(el.getAttribute("data-warn")), hs);
+      el.textContent = w ? "⚠ " + w : ""; el.style.display = w ? "" : "none";
+    });
+  }
+  setInterval(tickClock, 30000);
+  setInterval(function () {
+    var el = document.getElementById("timer"); if (!el || ui.view !== "test") return;
+    var tr = curTest(); if (tr.timerStartMs) el.textContent = mmss((Date.now() - tr.timerStartMs) / 1000);
+  }, 1000);
+  window.addEventListener("resize", measureHeader);
+  window.addEventListener("storage", function (e) { if (e.key === LS_STATE) { st = loadState(); render(true); } });
+
+  // Exposed for checks from the browser console.
+  window.NDVTC = { hoursStatus: hoursStatus, fmtET: fmtET, buildPayload: function (o) { return buildPayload(st, o); }, buildMarkdown: function (o) { return buildMarkdown(st, o); }, state: function () { return st; } };
+
+  render();
+})();
+</script>
+</body>
+</html>
