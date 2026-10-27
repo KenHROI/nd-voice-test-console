@@ -5,7 +5,7 @@ The tester opens the link on a phone or laptop, makes five calls, ticks boxes
 while talking, and taps **Submit results**.
 
 - `index.html` — the whole app. Plain HTML, CSS and JavaScript. No build step, no external requests except the results relay.
-- `tests.config.js` — every piece of test content (instructions, scripts, checklist items, flag types, office hours, relay URL). Edit this file to change a test.
+- `tests.config.js` — every piece of test content (instructions, scripts, checklist items, flag types, office hours, relay URL). Edit this file to change a test, then bump `?v=` on its script tag in `index.html` so phones fetch the new copy.
 - `relay/` — a Cloudflare Worker that receives submissions and saves each one as a new file in a private results repository. Code only; its secrets live in Cloudflare.
 
 ## Link format
